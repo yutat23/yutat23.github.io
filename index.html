@@ -1,114 +1,137 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>yutat23.dev</title>
-  <!-- favicon -->
-  <link rel="icon" href="https://avatars.githubusercontent.com/u/45997563?v=4" type="image/x-icon">
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <style>
-    html, body {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
-      overflow: hidden;
-      background: radial-gradient(circle at center, #002030 0%, #000008 80%);
-      font-family: 'Press Start 2P', monospace;
-    }
-    .star {
-      position: absolute;
-      width: 2px; height: 2px;
-      background: #fff;
-      opacity: 0;
-      animation: twinkle infinite ease-in-out;
-      image-rendering: pixelated;
-    }
-    @keyframes twinkle {
-      0%,100% { opacity: 0; }
-      50%     { opacity: 1; }
-    }
-    .pixel-planet {
-      position: absolute;
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
-    }
-    #message {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 10;
-      color: #ffffff;
-      font-size: 16px;
-      padding: 8px 12px;
-      white-space: nowrap;
-      pointer-events: none;
-      text-shadow:
-        -1px -1px 0 #000,
-         1px -1px 0 #000,
-        -1px  1px 0 #000,
-         1px  1px 0 #000;
-      border-radius: 4px;
-    }
-  </style>
-</head>
-<body>
-  <div id="message">HELLO WORLD</div>
-<script>
-  const numStars = 200;
-  for (let i = 0; i < numStars; i++) {
-    const star = document.createElement('div');
-    star.className = 'star';
-    star.style.top  = Math.random() * 100 + '%';
-    star.style.left = Math.random() * 100 + '%';
-    star.style.animationDuration = (Math.random() * 2 + 1) + 's';
-    star.style.animationDelay    = (Math.random() * 5) + 's';
-    document.body.appendChild(star);
-  }
-
-  const planetTypes = [
-    { size: 20, color: '#00eeee' },
-    { size: 16, color: '#b22222' },
-    { size: 18, color: '#f4a460' },
-    { size: 30, color: '#ffa500' },
-    { size: 26, color: '#ff6347' },
-    { size: 32, color: '#4682b4' },
-    { size: 34, color: '#0fe060' }
-  ];
-
-  function createPixelPlanet({ size, color }) {
-    const canvas = document.createElement('canvas');
-    const res = Math.floor(size / 2);
-    canvas.width  = res;
-    canvas.height = res;
-    canvas.className = 'pixel-planet';
-    canvas.style.width  = size + 'px';
-    canvas.style.height = size + 'px';
-
-    const pW = size / window.innerWidth  * 100;
-    const pH = size / window.innerHeight * 100;
-    const extra = 5;
-    const maxX = 100 - pW - extra;
-    const maxY = 100 - pH - extra;
-    const xPct = extra + Math.random() * maxX;
-    const yPct = extra + Math.random() * maxY;
-    canvas.style.left = xPct + '%';
-    canvas.style.top  = yPct + '%';
-
-    document.body.appendChild(canvas);
-    const ctx = canvas.getContext('2d');
-    for (let py = 0; py < res; py++) {
-      for (let px = 0; px < res; px++) {
-        const dx = px - res/2 + 0.5;
-        const dy = py - res/2 + 0.5;
-        if (dx*dx + dy*dy <= (res/2)*(res/2)) {
-          ctx.fillStyle = color;
-          ctx.fillRect(px, py, 1, 1);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>yutat23.dev</title>
+    <!-- favicon -->
+    <link
+      rel="icon"
+      href="https://avatars.githubusercontent.com/u/45997563?v=4"
+      type="image/x-icon"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: radial-gradient(circle at center, #002030 0%, #000008 80%);
+        font-family: "Press Start 2P", monospace;
+      }
+      .star {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: #fff;
+        opacity: 0;
+        animation: twinkle infinite ease-in-out;
+        image-rendering: pixelated;
+      }
+      @keyframes twinkle {
+        0%,
+        100% {
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
         }
       }
-    }
-  }
+      .pixel-planet {
+        position: absolute;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+      #message {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        color: #ffffff;
+        font-size: 16px;
+        padding: 8px 12px;
+        white-space: nowrap;
+        pointer-events: none;
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000,
+          1px 1px 0 #000;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="message">HELLO WORLD</div>
+    <script>
+      const numStars = 200;
+      for (let i = 0; i < numStars; i++) {
+        const star = document.createElement("div");
+        star.className = "star";
+        star.style.top = Math.random() * 100 + "%";
+        star.style.left = Math.random() * 100 + "%";
+        star.style.animationDuration = Math.random() * 2 + 1 + "s";
+        star.style.animationDelay = Math.random() * 5 + "s";
+        document.body.appendChild(star);
+      }
 
-  planetTypes.forEach(createPixelPlanet);
-</script>
-</body>
+      const planetTypes = [
+        { size: 20, color: "#00eeee" },
+        { size: 16, color: "#b22222" },
+        { size: 18, color: "#f4a460" },
+        { size: 30, color: "#ffa500" },
+        { size: 26, color: "#ff6347" },
+        { size: 32, color: "#4682b4" },
+        { size: 34, color: "#0fe060" },
+      ];
+
+      function createPixelPlanet({ size, color }) {
+        const canvas = document.createElement("canvas");
+        const res = Math.floor(size / 2);
+        canvas.width = res;
+        canvas.height = res;
+        canvas.className = "pixel-planet";
+        canvas.style.width = size + "px";
+        canvas.style.height = size + "px";
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext("2d");
+        for (let y = 0; y < res; y++) {
+          for (let x = 0; x < res; x++) {
+            const dx = x - res / 2 + 0.5,
+              dy = y - res / 2 + 0.5;
+            if (dx * dx + dy * dy <= (res / 2) * (res / 2)) {
+              ctx.fillStyle = color;
+              ctx.fillRect(x, y, 1, 1);
+            }
+          }
+        }
+
+        const msg = document.getElementById("message");
+        const msgRect = msg.getBoundingClientRect();
+        const margin = 20;
+        const maxX = window.innerWidth - size - margin;
+        const maxY = window.innerHeight - size - margin;
+
+        let x, y;
+        do {
+          x = margin + Math.random() * maxX;
+          y = margin + Math.random() * maxY;
+        } while (
+          x + size > msgRect.left &&
+          x < msgRect.right &&
+          y + size > msgRect.top &&
+          y < msgRect.bottom
+        );
+
+        canvas.style.left = x + "px";
+        canvas.style.top = y + "px";
+      }
+
+      planetTypes.forEach(createPixelPlanet);
+    </script>
+  </body>
 </html>
