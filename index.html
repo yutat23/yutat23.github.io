@@ -51,7 +51,6 @@
       .pixel-planet {
         position: absolute;
         image-rendering: pixelated;
-        filter: blur(1px);
       }
       #home-view {
         position: fixed;
@@ -95,6 +94,8 @@
         -webkit-backdrop-filter: blur(6px);
         border-radius: 8px;
         padding: 8px 0 0 0;
+        mask-image: radial-gradient(ellipse 90% 95% at 50% 50%, black 40%, transparent 100%);
+        -webkit-mask-image: radial-gradient(ellipse 90% 95% at 50% 50%, black 40%, transparent 100%);
       }
       #portfolio-section.is-visible {
         display: flex;
