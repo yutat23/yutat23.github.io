@@ -11,19 +11,23 @@
       type="image/x-icon"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Press+Start+2P&display=swap"
       rel="stylesheet"
     />
     <style>
+      :root {
+        --text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000,
+          1px 1px 0 #000;
+      }
       html,
       body {
         margin: 0;
         padding: 0;
         width: 100%;
         height: 100%;
-        overflow: hidden;
+        overflow: auto;
         background: radial-gradient(circle at center, #002030 0%, #000008 80%);
-        font-family: "Press Start 2P", monospace;
+        font-family: "Noto Sans JP", sans-serif;
       }
       .star {
         position: absolute;
@@ -33,6 +37,7 @@
         opacity: 0;
         animation: twinkle infinite ease-in-out;
         image-rendering: pixelated;
+        filter: blur(0.5px);
       }
       @keyframes twinkle {
         0%,
@@ -46,28 +51,119 @@
       .pixel-planet {
         position: absolute;
         image-rendering: pixelated;
-        image-rendering: crisp-edges;
+        filter: blur(1px);
+      }
+      #home-view {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
       }
       #message {
-        position: absolute;
+        position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         z-index: 10;
         color: #ffffff;
+        font-family: "Press Start 2P", monospace;
         font-size: 16px;
         padding: 8px 12px;
         white-space: nowrap;
-        pointer-events: none;
-        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000,
-          1px 1px 0 #000;
-        border-radius: 4px;
+        text-align: center;
+        text-shadow: var(--text-shadow);
+      }
+      #world-link {
+        color: inherit;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      #world-link:hover {
+        opacity: 0.85;
+      }
+      #portfolio-section {
+        display: none;
+        position: fixed;
+        top: calc(50% + 36px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        text-align: left;
+        max-height: calc(100vh - 140px);
+        flex-direction: column;
+        background: rgba(0, 8, 24, 0.15);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border-radius: 8px;
+        padding: 8px 0 0 0;
+      }
+      #portfolio-section.is-visible {
+        display: flex;
+      }
+      #portfolio-list {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0 16px;
+      }
+      #portfolio-section .portfolio-category {
+        margin: 24px 0 12px 0;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.95);
+      }
+      #portfolio-section .portfolio-category:first-child {
+        margin-top: 0;
+      }
+      #portfolio-section ul.portfolio-list {
+        list-style: none;
+        margin: 0 0 16px 0;
+        padding: 0;
+        text-align: left;
+      }
+      #portfolio-section .portfolio-item {
+        margin-bottom: 12px;
+        font-size: 14px;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.95);
+      }
+      #portfolio-section .portfolio-item a {
+        color: #5ee7ff;
+        text-decoration: none;
+        text-shadow: var(--text-shadow);
+      }
+      #portfolio-section .portfolio-item a:hover {
+        text-decoration: underline;
+        color: #8eefff;
+      }
+      #portfolio-section .portfolio-item .sep {
+        color: rgba(255, 255, 255, 0.85);
+        margin: 0 6px;
+      }
+      #back-link {
+        flex-shrink: 0;
+        padding: 12px 0 8px 0;
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 12px;
+        text-decoration: none;
+        text-shadow: var(--text-shadow);
+      }
+      #back-link:hover {
+        color: #fff;
       }
     </style>
   </head>
   <body>
-    <div id="message">HELLO WORLD</div>
+    <div id="home-view">
+      <div id="message">
+        HELLO <a id="world-link" href="#" aria-label="Works">WORLD</a>
+      </div>
+      <div id="portfolio-section" aria-hidden="true">
+        <div id="portfolio-list"></div>
+        <a id="back-link" href="#" aria-label="戻る">← Back</a>
+      </div>
+    </div>
     <script>
+      const homeView = document.getElementById("home-view");
       const numStars = 200;
       for (let i = 0; i < numStars; i++) {
         const star = document.createElement("div");
@@ -76,7 +172,7 @@
         star.style.left = Math.random() * 100 + "%";
         star.style.animationDuration = Math.random() * 2 + 1 + "s";
         star.style.animationDelay = Math.random() * 5 + "s";
-        document.body.appendChild(star);
+        homeView.appendChild(star);
       }
 
       const planetTypes = [
@@ -97,7 +193,7 @@
         canvas.className = "pixel-planet";
         canvas.style.width = size + "px";
         canvas.style.height = size + "px";
-        document.body.appendChild(canvas);
+        homeView.appendChild(canvas);
         const ctx = canvas.getContext("2d");
         for (let y = 0; y < res; y++) {
           for (let x = 0; x < res; x++) {
@@ -110,8 +206,7 @@
           }
         }
 
-        const msg = document.getElementById("message");
-        const msgRect = msg.getBoundingClientRect();
+          const msgRect = document.getElementById("message").getBoundingClientRect();
         const margin = 20;
         const maxX = window.innerWidth - size - margin;
         const maxY = window.innerHeight - size - margin;
@@ -132,6 +227,89 @@
       }
 
       planetTypes.forEach(createPixelPlanet);
+
+      (function () {
+        const worldLink = document.getElementById("world-link");
+        const backLink = document.getElementById("back-link");
+        const portfolioSection = document.getElementById("portfolio-section");
+        const portfolioList = document.getElementById("portfolio-list");
+
+        const CATEGORY_ORDER = ["Webアプリケーション", "CLI", "GUIアプリケーション", "ライブラリ"];
+
+        function escapeHtml(str) {
+          const div = document.createElement("div");
+          div.textContent = str;
+          return div.innerHTML;
+        }
+
+        function togglePortfolio() {
+          const isOpen = portfolioSection.classList.toggle("is-visible");
+          worldLink.textContent = isOpen ? "WORKS" : "WORLD";
+          portfolioSection.setAttribute("aria-hidden", !isOpen);
+        }
+
+        function disableWorldLink() {
+          worldLink.style.pointerEvents = "none";
+          worldLink.style.opacity = "1";
+        }
+
+        function renderItem(item) {
+          const parts = [`<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.name)}</a>`];
+          if (item.siteUrl) {
+            parts.push(`<span class="sep">·</span><a href="${escapeHtml(item.siteUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.siteUrl)}</a>`);
+          }
+          if (item.description) {
+            parts.push(`<span class="sep">—</span><span>${escapeHtml(item.description)}</span>`);
+          }
+          return `<li class="portfolio-item">${parts.join("")}</li>`;
+        }
+
+        function groupByCategory(items) {
+          const groups = {};
+          items.forEach((item) => {
+            const cat = item.category || "その他";
+            (groups[cat] ??= []).push(item);
+          });
+          const ordered = CATEGORY_ORDER.filter((c) => groups[c]);
+          const rest = Object.keys(groups).filter((c) => !CATEGORY_ORDER.includes(c));
+          return [...ordered, ...rest].map((cat) => ({ category: cat, items: groups[cat] }));
+        }
+
+        worldLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          togglePortfolio();
+        });
+        backLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          togglePortfolio();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && portfolioSection.classList.contains("is-visible")) {
+            togglePortfolio();
+          }
+        });
+
+        fetch("portfolio.json")
+          .then((res) => res.json())
+          .then((items) => {
+            if (items.length === 0) {
+              disableWorldLink();
+              return;
+            }
+            const groups = groupByCategory(items);
+            portfolioList.innerHTML = groups
+              .map(
+                ({ category, items: catItems }) => `
+              <div class="portfolio-category">${escapeHtml(category)}</div>
+              <ul class="portfolio-list">
+                ${catItems.map(renderItem).join("")}
+              </ul>
+            `
+              )
+              .join("");
+          })
+          .catch(disableWorldLink);
+      })();
     </script>
   </body>
 </html>

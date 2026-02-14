@@ -1,0 +1,46 @@
+[
+  {
+    "name": "typo2ch",
+    "category": "Webアプリケーション",
+    "url": "https://github.com/yutat23/typo2ch",
+    "siteUrl": "https://typo2ch.yutat23.dev",
+    "description": "2chの書き込み風アニメーションSVGを生成するWebアプリ(TypeScript)"
+  },
+  {
+    "name": "DocSnap",
+    "category": "Webアプリケーション",
+    "url": "https://github.com/yutat23/docsnap",
+    "siteUrl": "https://docsnap.yutat23.dev",
+    "description": "紙のドキュメントをスマホで撮影して、きれいに整形するWebアプリ(TypeScript)"
+  },
+  {
+    "name": "coe",
+    "category": "CLI",
+    "url": "https://github.com/yutat23/coe",
+    "description": "簡単にTCPソケット通信を行えるCLIツール(Go)"
+  },
+  {
+    "name": "trail",
+    "category": "CLI",
+    "url": "https://github.com/yutat23/trail",
+    "description": "ファイルローテションに対応したカラフルなログ監視ツール(Go)"
+  },
+  {
+    "name": "neteye",
+    "category": "CLI",
+    "url": "https://github.com/yutat23/neteye",
+    "description": "ネットワーク接続を調べて監視・可視化するためのCLIツール(Go)"
+  },
+  {
+    "name": "traysvc",
+    "category": "GUIアプリケーション",
+    "url": "https://github.com/yutat23/traysvc",
+    "description": "任意のWindowsサービスの起動状態確認と起動停止をタスクトレイから操作(Go)"
+  },
+  {
+    "name": "dnbn.net",
+    "category": "ライブラリ",
+    "url": "https://github.com/yutat23/dnbn.net",
+    "description": "再接続処理やキープアライブなどの自動処理を備えた.NET8+対応のTCPソケット通信ライブラリ(C#)"
+  }
+]
