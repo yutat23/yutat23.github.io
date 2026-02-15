@@ -71,14 +71,48 @@
         white-space: nowrap;
         text-align: center;
         text-shadow: var(--text-shadow);
+        -webkit-user-select: none;
+        user-select: none;
       }
       #world-link {
         color: inherit;
         cursor: pointer;
         text-decoration: none;
+        display: inline-block;
+        text-shadow: var(--text-shadow);
+        animation: soft-blink 2.5s ease-in-out infinite, glitch 10s ease-in-out infinite;
+      }
+      @keyframes glitch {
+        0%, 94%, 100% {
+          text-shadow: var(--text-shadow);
+          transform: translate(0);
+        }
+        95% {
+          text-shadow: -2px 0 rgba(255, 0, 128, 0.9), 2px 0 rgba(0, 255, 255, 0.9), var(--text-shadow);
+          transform: translate(-2px, 1px);
+        }
+        95.5% {
+          text-shadow: 2px 0 rgba(0, 255, 255, 0.9), -2px 0 rgba(255, 0, 128, 0.9), var(--text-shadow);
+          transform: translate(2px, -1px);
+        }
+        96% {
+          text-shadow: -1px 0 rgba(255, 0, 128, 0.7), 1px 0 rgba(0, 255, 255, 0.7), var(--text-shadow);
+          transform: translate(-1px, 0);
+        }
+        96.5% {
+          text-shadow: 1px 0 rgba(0, 255, 255, 0.7), -1px 0 rgba(255, 0, 128, 0.7), var(--text-shadow);
+          transform: translate(1px, 1px);
+        }
+        97% {
+          text-shadow: var(--text-shadow);
+          transform: translate(0);
+        }
       }
       #world-link:hover {
         opacity: 0.85;
+        transform: translate(0);
+        text-shadow: var(--text-shadow);
+        animation: none;
       }
       #portfolio-section {
         display: none;
