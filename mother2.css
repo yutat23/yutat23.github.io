@@ -505,11 +505,35 @@ body {
   color: #d8d8e8;
 }
 
-#works-hint {
+#works-footer {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+#works-hint {
   font-size: 11px;
   color: #9898b0;
-  text-align: right;
+}
+
+#works-close {
+  border: 0;
+  padding: 2px 4px;
+  background: transparent;
+  color: #f8f8f8;
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+#works-close:hover,
+#works-close:focus-visible {
+  color: #ffd870;
+  outline: none;
+  text-shadow: 0 0 5px rgba(255, 216, 112, 0.55);
 }
 
 /* --------------------------------------------------------------------------
@@ -547,9 +571,22 @@ body::after {
 }
 
 @media (max-width: 520px) {
+  #game {
+    padding: 10px;
+    gap: 10px;
+  }
+  #top-bar,
+  #column {
+    width: 100%;
+  }
+  .eb-window.mini {
+    padding: 7px 10px;
+    font-size: 13px;
+  }
   #msg-window {
-    font-size: 15px;
-    min-height: 80px;
+    min-height: 94px;
+    padding: 14px 16px;
+    font-size: 17px;
   }
   #cmd-window,
   #psi-window {
@@ -557,23 +594,43 @@ body::after {
     width: 100%;
   }
   #cmd-list {
-    font-size: 15px;
-    gap: 8px 12px;
+    font-size: 17px;
+    gap: 10px 14px;
   }
   #psi-list {
-    font-size: 15px;
+    font-size: 17px;
   }
   #enemy {
-    width: 72px;
-    height: 72px;
+    width: clamp(140px, 42vw, 190px);
+    height: auto;
+    max-width: 30vh;
   }
   .status-box {
+    min-width: min(58vw, 220px);
+    padding: 10px 18px 12px;
+    font-size: 16px;
+  }
+  .status-name {
+    font-size: 17px;
+  }
+  .status-stat {
+    display: grid;
+    grid-template-columns: 34px max-content;
+    justify-content: center;
+    column-gap: 16px;
+  }
+  .stat-label {
     font-size: 13px;
-    min-width: 120px;
-    padding: 8px 14px;
+    padding: 4px 6px 3px;
+  }
+  .odometer {
+    --odo-h: 24px;
+  }
+  .odo-digit {
+    font-size: 18px;
   }
   .works-item {
-    font-size: 14px;
+    font-size: 15px;
   }
   #works-hint {
     display: none;

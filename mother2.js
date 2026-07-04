@@ -986,7 +986,7 @@ function chooseEnemyAttack() {
   return ENEMY_ATTACKS[ENEMY_ATTACKS.length - 1];
 }
 
-// 確率で敵が反撃してくる
+// 指定確率で敵の攻撃を実行する(通常の敵ターンでは100%)
 async function maybeCounter(prob) {
   if (Math.random() >= prob) return;
   const attack = chooseEnemyAttack();
@@ -1006,6 +1006,12 @@ async function maybeCounter(prob) {
   await say(
     ENEMY_IDLE_LINES[Math.floor(Math.random() * ENEMY_IDLE_LINES.length)]
   );
+}
+
+// プレイヤーの有効な行動を終え、敵ターンを実行してメニューへ戻す
+async function finishBattleTurn() {
+  await maybeCounter(1);
+  openMenu();
 }
 
 /* --------------------------------------------------------------------------
@@ -1103,14 +1109,14 @@ async function castPsi(spell) {
       hpMeter.setValue(hpMeter.value + healHp, 10);
       await say("・YOU の HPが かいふくした!");
     }
-    openMenu();
+    await finishBattleTurn();
     return;
   }
 
   // 攻撃PSI
   if (spell.miss && Math.random() < spell.miss) {
     await say("・しかし yutat23 には あたらなかった!");
-    openMenu();
+    await finishBattleTurn();
     return;
   }
   sfx.hit();
@@ -1124,8 +1130,7 @@ async function castPsi(spell) {
     openMenu();
     return;
   }
-  await maybeCounter(0.8);
-  openMenu();
+  await finishBattleTurn();
 }
 
 function initPsi() {
@@ -1177,9 +1182,7 @@ async function doAction(action) {
         openMenu();
         return;
       }
-      // 6割で反撃してくる
-      await maybeCounter(1.0);
-      openMenu();
+      await finishBattleTurn();
       return;
     }
     case "psi": {
@@ -1190,7 +1193,7 @@ async function doAction(action) {
         await say("・マジックバタフライが とんできた!");
         ppMeter.setValue(STATUS_PP_MAX, 20);
         await say("・YOU の PPが かいふくした!");
-        openMenu();
+        await finishBattleTurn();
         return;
       }
       openPsi();
@@ -1212,12 +1215,12 @@ async function doAction(action) {
       return;
     case "talk":
       await say(TALK_LINES[talkIndex++ % TALK_LINES.length]);
-      openMenu();
+      await finishBattleTurn();
       return;
     case "run":
       await say("にげだした!");
       await say("しかし まわりこまれてしまった!");
-      openMenu();
+      await finishBattleTurn();
       return;
   }
 }
@@ -1297,6 +1300,10 @@ function openWorksItem() {
 }
 
 function initWorks() {
+  $("works-close").addEventListener("click", () => {
+    if (state === "works") closeWorks();
+  });
+
   fetch("portfolio.json")
     .then((res) => {
       if (!res.ok) {
