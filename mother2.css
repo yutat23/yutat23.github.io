@@ -679,8 +679,8 @@ body::after {
     max-width: 30vh;
   }
   .status-box {
-    width: 220px;
-    min-width: 220px;
+    width: 150px;
+    min-width: 150px;
     padding: 7px 10px 9px;
     font-size: 20px;
   }
