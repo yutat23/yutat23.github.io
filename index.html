@@ -293,6 +293,58 @@
       #back-link:hover {
         color: #fff;
       }
+      #profile {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        text-align: center;
+        max-width: 90vw;
+        transition: opacity 0.3s ease;
+      }
+      /* ポートフォリオ表示中はリストと重なるため隠す */
+      #home-view.is-portfolio-open #profile {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #profile-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 2px solid rgba(94, 231, 255, 0.5);
+      }
+      #profile-name {
+        font-family: "Press Start 2P", monospace;
+        font-size: 10px;
+        color: #fff;
+        text-shadow: var(--text-shadow);
+      }
+      #profile-bio {
+        font-family: "DotGothic16", "Noto Sans JP", sans-serif;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.85);
+        text-shadow: var(--text-shadow);
+      }
+      #profile-links {
+        display: flex;
+        gap: 16px;
+      }
+      #profile-links a {
+        font-family: "Press Start 2P", monospace;
+        font-size: 9px;
+        color: #5ee7ff;
+        text-decoration: none;
+        text-shadow: var(--text-shadow);
+      }
+      #profile-links a:hover {
+        color: #8eefff;
+        text-decoration: underline;
+      }
       /* CRTスキャンライン風オーバーレイ */
       body::after {
         content: "";
@@ -334,6 +386,12 @@
           top: calc(20% + 36px);
           bottom: 16px;
         }
+        #profile {
+          bottom: 16px;
+        }
+        #profile-bio {
+          font-size: 11px;
+        }
       }
     </style>
   </head>
@@ -353,6 +411,13 @@
       <div id="portfolio-section" aria-hidden="true">
         <div id="portfolio-list"></div>
         <button id="back-link" type="button" aria-label="戻る">← Back</button>
+      </div>
+      <div id="profile">
+        <img id="profile-avatar" src="favicon.png" alt="yutat23のアイコン" width="44" height="44" />
+        <span id="profile-name">yutat23</span>
+        <nav id="profile-links" aria-label="Contact Links">
+          <a href="https://github.com/yutat23" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </nav>
       </div>
     </div>
     <script>
