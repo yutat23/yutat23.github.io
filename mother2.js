@@ -1214,7 +1214,7 @@ async function doAction(action) {
       openWorks();
       return;
     case "github":
-      await say("yutat23 は GitHub いきの ドアを あけた!");
+      await say("GitHub いきの ドアを あけた!");
       await say("いってらっしゃい!");
       window.open("https://github.com/yutat23", "_blank", "noopener");
       openMenu();
