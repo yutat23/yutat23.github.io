@@ -451,7 +451,7 @@ const SANCTUARY_ALIEN_FX = new Map([
 
 const BGM_TRACKS = {
   cosmic: {
-    bpm: 112,
+    bpm: 128,
     swing: 0.56,
     bass: COSMIC_BASS,
     lead: COSMIC_LEAD,
@@ -471,7 +471,7 @@ const BGM_TRACKS = {
     alienFx: OTHERWORLDLY_ALIEN_FX,
   },
   sanctuary: {
-    bpm: 150,
+    bpm: 138,
     swing: 0.5,
     bass: SANCTUARY_BASS,
     lead: SANCTUARY_LEAD,
