@@ -915,6 +915,46 @@ function shakeEnemy() {
   setTimeout(() => enemy.classList.remove("hit"), 400);
 }
 
+function waitForEnemyAnimation(enemy, animationName) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const timeout = setTimeout(finish, 1000);
+
+    function finish() {
+      clearTimeout(timeout);
+      enemy.removeEventListener("animationend", onAnimationEnd);
+      resolve();
+    }
+
+    function onAnimationEnd(event) {
+      if (event.target !== enemy || event.animationName !== animationName) return;
+      finish();
+    }
+
+    enemy.addEventListener("animationend", onAnimationEnd);
+  });
+}
+
+async function fadeEnemyOut() {
+  const enemy = $("enemy");
+  enemy.classList.remove("hit", "enemy-reviving", "enemy-defeated");
+  void enemy.offsetWidth;
+  enemy.classList.add("enemy-defeated");
+  await waitForEnemyAnimation(enemy, "enemy-fade-out");
+}
+
+async function fadeEnemyIn() {
+  const enemy = $("enemy");
+  enemy.classList.remove("enemy-defeated", "enemy-reviving");
+  void enemy.offsetWidth;
+  enemy.classList.add("enemy-reviving");
+  await waitForEnemyAnimation(enemy, "enemy-fade-in");
+  enemy.classList.remove("enemy-reviving");
+}
+
 // PSI発動時の画面フラッシュ(kind: "fire" / "freeze" / "thunder" / 省略=回復の緑)
 function psiFlash(kind) {
   const flash = $("flash");
@@ -931,6 +971,7 @@ let enemyHp = ENEMY_HP_MAX;
 // 撃破演出(敵HPはここで満タンに戻す)
 async function enemyDefeated() {
   await say("・yutat23 は たおれた!");
+  await fadeEnemyOut();
   await say("・YOU WIN!\n・YOU は 32 の けいけんちをえた");
   await say("・…");
   await say("・……");
@@ -938,6 +979,7 @@ async function enemyDefeated() {
   advanceBgmTrack();
   await say("・…yutat23 は なにごともなかったかのように\nたちあがった!");
   enemyHp = ENEMY_HP_MAX;
+  await fadeEnemyIn();
 }
 
 // 反撃のあとに出るランダムなセリフ
