@@ -946,28 +946,28 @@ const ENEMY_IDLE_LINES = [
   "・yutat23 は くちぶえを ふいている...",
   "・yutat23 は ブツブツ ひとりごとを つぶやいている...",
   "・yutat23 は しずかに コーヒーを すすった。",
-  "・yutat23 は つぎの こうげきを かんがえている...",
+  "・yutat23 は つぎの こうげきの けいかくをねっている...",
 ];
 
 // 敵の攻撃。weightの合計に対する割合で攻撃の種類が選ばれる
 const ENEMY_ATTACKS = [
   {
-    weight: 60,
+    weight: 65,
     message: "・yutat23 の こうげき!",
-    minDamage: 40,
-    maxDamage: 60,
+    minDamage: 30,
+    maxDamage: 50,
   },
   {
     weight: 30,
     message: "・yutat23 が なぐりかかってきた!",
     minDamage: 60,
-    maxDamage: 100,
+    maxDamage: 80,
   },
   {
-    weight: 10,
+    weight: 5,
     message: "・yutat23 の PKスターストーム!",
-    minDamage: 150,
-    maxDamage: 200,
+    minDamage: 120,
+    maxDamage: 190,
   },
 ];
 
@@ -1049,6 +1049,7 @@ async function runDefeat() {
   await say("・みれるかと おもった?");
   await say("・ざんねんだが そこまで つくりこんでないんだよね」");
   hpMeter.setValue(STATUS_HP_MAX, 10);
+  ppMeter.setValue(STATUS_PP_MAX, 10);
   await say("・YOU は カムバックした!");
   openMenu();
 }
@@ -1060,7 +1061,8 @@ const PSI_LIST = [
   { name: "ファイア α", cost: 6, type: "attack", min: 60, max: 100, flash: "fire" },
   { name: "フリーズ α", cost: 5, type: "attack", min: 135, max: 225, flash: "freeze" },
   { name: "サンダー α", cost: 3, type: "attack", min: 60, max: 80, miss: 0.4, flash: "thunder" },
-  { name: "ライフアップ α", cost: 5, type: "heal" },
+  { name: "ライフアップ α", cost: 5, type: "heal", min: 75, max: 125 },
+  { name: "ライフアップ β", cost: 8, type: "heal", min: 225, max: 375 },
 ];
 
 const psiWindow = $("psi-window");
@@ -1096,7 +1098,7 @@ async function castPsi(spell) {
     openPsi();
     return;
   }
-  ppMeter.setValue(ppMeter.value - spell.cost, 16);
+  ppMeter.setValue(ppMeter.value - spell.cost, 10);
   sfx.psi();
   psiFlash(spell.flash);
   await say("・YOUは PSI " + spell.name + "!");
@@ -1105,9 +1107,16 @@ async function castPsi(spell) {
     if (hpMeter.value >= STATUS_HP_MAX) {
       await say("・しかし なにも おこらなかった。");
     } else {
-      const healHp = 100 + Math.floor(Math.random() * 100);
-      hpMeter.setValue(hpMeter.value + healHp, 10);
-      await say("・YOU の HPが かいふくした!");
+      const healHp =
+        spell.min + Math.floor(Math.random() * (spell.max - spell.min + 1));
+      const reachesMax = hpMeter.value + healHp >= STATUS_HP_MAX;
+      const actualHeal = Math.min(healHp, STATUS_HP_MAX - hpMeter.value);
+      hpMeter.setValue(hpMeter.value + actualHeal, 10);
+      await say(
+        reachesMax
+          ? "・YOU の HPが まんタンになる!"
+          : "・YOU の HPが " + actualHeal + " かいふくする!"
+      );
     }
     await finishBattleTurn();
     return;
@@ -1190,10 +1199,7 @@ async function doAction(action) {
       const minCost = Math.min(...PSI_LIST.map((s) => s.cost));
       if (ppMeter.value < minCost) {
         await say("・PPが たりない!");
-        await say("・マジックバタフライが とんできた!");
-        ppMeter.setValue(STATUS_PP_MAX, 20);
-        await say("・YOU の PPが かいふくした!");
-        await finishBattleTurn();
+        openMenu();
         return;
       }
       openPsi();
@@ -1215,6 +1221,11 @@ async function doAction(action) {
       return;
     case "talk":
       await say(TALK_LINES[talkIndex++ % TALK_LINES.length]);
+      await finishBattleTurn();
+      return;
+    case "check":
+      await say("YOUは yutat23をチェックした!" );
+      await say("しかし なにもわからなかった..." );
       await finishBattleTurn();
       return;
     case "run":
@@ -1436,8 +1447,8 @@ function createOdometer(el, numDigits, initial = 0, onZero = null) {
   };
 }
 
-const STATUS_HP_MAX = 291;
-const STATUS_PP_MAX = 121;
+const STATUS_HP_MAX = 310;
+const STATUS_PP_MAX = 123;
 let hpMeter = null;
 let ppMeter = null;
 
