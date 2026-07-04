@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>yutat23.dev — MOTHER2 Ver</title>
+    <meta
+      name="description"
+      content="yutat23 のポートフォリオサイト(MOTHER2/EARTHBOUND風バージョン)。Webアプリケーション、CLIツール、ライブラリなどの制作物を紹介しています。"
+    />
+    <meta name="theme-color" content="#180848" />
+    <meta property="og:title" content="yutat23.dev — MOTHER2 Ver" />
+    <meta property="og:url" content="https://yutat23.dev/mother2.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://yutat23.dev/favicon.png" />
+    <!-- favicon -->
+    <link rel="icon" href="favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="mother2.css" />
+    <script src="mother2.js" defer></script>
+  </head>
+  <body>
+    <!-- サイケデリックな戦闘背景 -->
+    <canvas id="bg" aria-hidden="true"></canvas>
+    <!-- PSI発動時の画面フラッシュ -->
+    <div id="flash" aria-hidden="true"></div>
+
+    <div id="game">
+      <div id="top-bar">
+        <a id="ver-link" class="eb-window mini" href="./">← 通常Ver</a>
+        <button id="sound-toggle" class="eb-window mini" type="button">
+          SOUND: ON
+        </button>
+      </div>
+
+      <div id="column">
+        <!-- メッセージウィンドウ -->
+        <div id="msg-window" class="eb-window">
+          <p id="msg-text"></p>
+          <span id="msg-cursor" class="blink hidden" aria-hidden="true">▼</span>
+        </div>
+        <!-- バトルコマンド(3列×2行) -->
+        <div id="cmd-window" class="eb-window hidden">
+          <span id="cmd-owner">YOU</span>
+          <ul id="cmd-list">
+            <li data-action="attack">たたく</li>
+            <li data-action="works">WORKS</li>
+            <li data-action="talk">はなす</li>
+            <li data-action="psi">PSI</li>
+            <li data-action="github">GitHub</li>
+            <li data-action="run">にげる</li>
+          </ul>
+        </div>
+        <!-- PSI選択ウィンドウ(コマンドと入れ替わりで表示) -->
+        <div id="psi-window" class="eb-window hidden">
+          <span id="psi-owner">PSI</span>
+          <ul id="psi-list"></ul>
+        </div>
+      </div>
+
+      <!-- 敵(?)スプライト -->
+      <div id="stage">
+        <img
+          id="enemy"
+          src="favicon.png"
+          alt="yutat23"
+          width="256"
+          height="256"
+        />
+      </div>
+
+      <!-- ステータスウィンドウ(HP/PPはドラムロール式カウンタ) -->
+      <div id="status-row">
+        <div class="eb-window status-box">
+          <div class="status-name">YOU</div>
+          <div class="status-stat">
+            <span class="stat-label">HP</span>
+            <span class="odometer" id="hp-meter"></span>
+          </div>
+          <div class="status-stat">
+            <span class="stat-label">PP</span>
+            <span class="odometer" id="pp-meter"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORKS 一覧ウィンドウ -->
+    <div id="works-window" class="eb-window hidden">
+      <div id="works-title">― WORKS ―</div>
+      <div id="works-list"></div>
+      <div id="works-desc"></div>
+      <div id="works-hint">↑↓:えらぶ&nbsp;&nbsp;Enter:ひらく&nbsp;&nbsp;Esc:もどる</div>
+    </div>
+  </body>
+</html>
