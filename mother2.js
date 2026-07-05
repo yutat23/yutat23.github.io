@@ -970,6 +970,8 @@ let enemyHp = ENEMY_HP_MAX;
 
 // 撃破演出(敵HPはここで満タンに戻す)
 async function enemyDefeated() {
+  // 致命傷のドラムロール中に敵を倒した場合は、HP 1で踏みとどまる
+  hpMeter.stopAtOneIfDecreasingToZero();
   await say("・yutat23 は たおれた!");
   await fadeEnemyOut();
   await say("・YOU WIN!\n・YOU は 32 の けいけんちをえた");
@@ -978,6 +980,8 @@ async function enemyDefeated() {
   await say("・………");
   advanceBgmTrack();
   await say("・…yutat23 は なにごともなかったかのように\nたちあがった!");
+  // 致命傷のドラムロール中に敵を倒した場合は、HP 1で踏みとどまる
+  hpMeter.stopAtOneIfDecreasingToZero();
   enemyHp = ENEMY_HP_MAX;
   await fadeEnemyIn();
 }
@@ -1480,9 +1484,16 @@ function createOdometer(el, numDigits, initial = 0, onZero = null) {
     }
   }
 
+  function stopAtOneIfDecreasingToZero() {
+    if (target !== 0 || value <= target) return;
+    target = 1;
+    // tickはすでに動作中なので、次フレームで1に向かって停止する
+  }
+
   render();
   return {
     setValue,
+    stopAtOneIfDecreasingToZero,
     get value() {
       return target;
     },
