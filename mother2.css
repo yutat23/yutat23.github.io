@@ -358,6 +358,17 @@ body {
   --f4: #f8d820;
 }
 
+/* PSIエフェクト(低解像度キャンバスを画面全体に引き伸ばしてドット感を出す) */
+#psi-fx {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 80;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
 @keyframes psi-flash {
   0% {
     background: var(--f1, #e8fff8);

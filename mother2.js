@@ -178,6 +178,65 @@ const sfx = {
     osc.start(t);
     osc.stop(t + 0.45);
   },
+  // 炎が爆ぜる(ノイズ+低い唸り)
+  burst: () => {
+    if (!soundOn || !ensureAudio()) return;
+    playNoise(audioCtx, audioCtx.currentTime, 0.25, 900, 0.05);
+    beep(70, 0.2, 0.05);
+  },
+  // 氷のきらめき(高音がゆっくり降りてくる)
+  sparkle: () => {
+    if (!soundOn || !ensureAudio()) return;
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(2600, t);
+    osc.frequency.exponentialRampToValueAtTime(500, t + 0.5);
+    gain.gain.setValueAtTime(0.03, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.5);
+  },
+  // 氷が砕ける
+  shatter: () => {
+    if (!soundOn || !ensureAudio()) return;
+    playNoise(audioCtx, audioCtx.currentTime, 0.22, 3200, 0.05);
+  },
+  // 雷の直撃(バリッというノイズ+低音)
+  crack: () => {
+    if (!soundOn || !ensureAudio()) return;
+    playNoise(audioCtx, audioCtx.currentTime, 0.28, 700, 0.08);
+    beep(55, 0.2, 0.06);
+  },
+  // 星が降ってくるホイッスル
+  starFall: () => {
+    if (!soundOn || !ensureAudio()) return;
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(1900, t);
+    osc.frequency.exponentialRampToValueAtTime(350, t + 0.4);
+    gain.gain.setValueAtTime(0.018, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.4);
+  },
+  // 星の着弾
+  starHit: () => {
+    if (!soundOn || !ensureAudio()) return;
+    playNoise(audioCtx, audioCtx.currentTime, 0.12, 500, 0.06);
+    beep(85, 0.12, 0.05);
+  },
+  // 回復のきらめき(上昇アルペジオ)
+  twinkle: () => {
+    [660, 880, 1100, 1320].forEach((f, i) =>
+      setTimeout(() => beep(f, 0.08, 0.02), i * 90)
+    );
+  },
 };
 
 function initSoundToggle() {
@@ -964,6 +1023,449 @@ function psiFlash(kind) {
   flash.classList.add("is-active");
 }
 
+/* --------------------------------------------------------------------------
+   PSIエフェクト
+   低解像度キャンバス(256x224)に毎フレーム描き、CSSで画面全体へ引き伸ばす
+   -------------------------------------------------------------------------- */
+const FX_W = 256;
+const FX_H = 224;
+let fxCtx = null;
+
+function ensureFxCtx() {
+  if (fxCtx) return fxCtx;
+  const canvas = $("psi-fx");
+  canvas.width = FX_W;
+  canvas.height = FX_H;
+  fxCtx = canvas.getContext("2d");
+  return fxCtx;
+}
+
+// 敵スプライトの中心と大きさをエフェクトキャンバス座標に変換して返す
+function fxEnemyRect() {
+  const r = $("enemy").getBoundingClientRect();
+  const sx = FX_W / window.innerWidth;
+  const sy = FX_H / window.innerHeight;
+  return {
+    cx: (r.left + r.width / 2) * sx,
+    cy: (r.top + r.height / 2) * sy,
+    w: r.width * sx,
+    h: r.height * sy,
+  };
+}
+
+// 本家風のカクカクしたコマ送りにするための描画レート
+const FX_FPS = 12;
+
+// drawFrame(ctx, t) を duration 秒のあいだ FX_FPS のコマ送りで呼ぶ
+function runFx(duration, drawFrame) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  const ctx = ensureFxCtx();
+  return new Promise((resolve) => {
+    const start = performance.now();
+    let lastFrame = -1;
+    (function frame(now) {
+      const t = (now - start) / 1000;
+      if (t >= duration) {
+        ctx.clearRect(0, 0, FX_W, FX_H);
+        resolve();
+        return;
+      }
+      // コマが変わるまでは前の絵を保持する
+      const frameIndex = Math.floor(t * FX_FPS);
+      if (frameIndex !== lastFrame) {
+        lastFrame = frameIndex;
+        ctx.clearRect(0, 0, FX_W, FX_H);
+        drawFrame(ctx, frameIndex / FX_FPS);
+      }
+      requestAnimationFrame(frame);
+    })(start);
+  });
+}
+
+// ひし形を1つ描く(outline=trueで輪郭のみ)
+function drawDiamond(ctx, x, y, rx, ry, color, outline) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - ry);
+  ctx.lineTo(x + rx, y);
+  ctx.lineTo(x, y + ry);
+  ctx.lineTo(x - rx, y);
+  ctx.closePath();
+  if (outline) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+}
+
+// 横長の六角形の輪郭(フリーズの立ち上がりの波動)
+function drawLens(ctx, x, y, w, h, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x - w, y);
+  ctx.lineTo(x - w * 0.5, y - h);
+  ctx.lineTo(x + w * 0.5, y - h);
+  ctx.lineTo(x + w, y);
+  ctx.lineTo(x + w * 0.5, y + h);
+  ctx.lineTo(x - w * 0.5, y + h);
+  ctx.closePath();
+  ctx.stroke();
+}
+
+// 本家風の4つ角の星。holeColorを渡すと中心をくり抜いたように見せる
+function drawGeoStar(ctx, x, y, r, color, holeColor) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const rad = i % 2 === 0 ? r : r * 0.42;
+    const a = (i * Math.PI) / 4 - Math.PI / 2;
+    const px = x + Math.cos(a) * rad;
+    const py = y + Math.sin(a) * rad;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+  if (holeColor) {
+    drawDiamond(ctx, x, y, r * 0.32, r * 0.32, holeColor, false);
+  }
+}
+
+// ファイア: 巨大なひし形の輪郭が敵に収束し、ギザギザの熱波が走り抜ける
+function fxFire() {
+  const e = fxEnemyRect();
+  const zigStart = 0.5;
+  const zigEnd = 1.15;
+  let peaks = [];
+  let bucket = -1;
+  let flashed = 0;
+  return runFx(1.5, (ctx, t) => {
+    if (flashed === 0 && t >= zigStart) {
+      flashed++;
+      psiFlash("fire");
+      sfx.burst();
+    }
+    if (flashed === 1 && t >= 1.0) {
+      flashed++;
+      psiFlash("fire");
+      sfx.burst();
+    }
+    const frame = Math.floor(t * 14);
+    if (t < zigStart) {
+      // 入れ子のひし形が明滅しながら縮んでいく
+      const u = t / zigStart;
+      for (let i = 0; i < 3; i++) {
+        const rx = (150 * (1 - u) + 18) * Math.pow(0.68, i);
+        drawDiamond(
+          ctx,
+          e.cx,
+          e.cy,
+          rx,
+          rx * 0.62,
+          (frame + i) % 2 === 0 ? "#f81800" : "#900000",
+          true
+        );
+      }
+    } else if (t < zigEnd) {
+      // ギザギザの熱波。山の形は数フレームごとに引き直す
+      const w = (t - zigStart) / (zigEnd - zigStart);
+      const amp = 26 * Math.sin(Math.PI * w);
+      const b = Math.floor(t * 12);
+      if (b !== bucket) {
+        bucket = b;
+        peaks = Array.from({ length: 23 }, () => (Math.random() - 0.5) * 2);
+      }
+      [
+        ["#f81800", 0],
+        ["#900000", 5],
+      ].forEach(([color, dy]) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        peaks.forEach((p, i) => {
+          const x = (FX_W / (peaks.length - 1)) * i;
+          const y = e.cy + dy + p * amp;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      });
+    } else {
+      // 波が収まり、まっすぐな線になって消える
+      [
+        ["#f81800", -4],
+        ["#900000", 4],
+      ].forEach(([color, dy]) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, e.cy + dy);
+        ctx.lineTo(FX_W, e.cy + dy);
+        ctx.stroke();
+      });
+    }
+  });
+}
+
+// フリーズ: 横長六角形の波動→ひし形の十字クラスタ→氷柱→横一線に収束
+function fxFreeze() {
+  const e = fxEnemyRect();
+  const LENS_COLORS = ["#2020c8", "#18b8e8", "#30c878"];
+  let phase = 0;
+  return runFx(1.6, (ctx, t) => {
+    if (phase === 0) {
+      phase = 1;
+      sfx.sparkle();
+    }
+    if (phase === 1 && t >= 0.55) {
+      phase = 2;
+      psiFlash("freeze");
+      sfx.shatter();
+    }
+    const frame = Math.floor(t * 12);
+    if (t < 0.55) {
+      // 横長の六角形が色を入れ替えつつ脈打ちながら広がる
+      const u = t / 0.55;
+      for (let i = 0; i < 3; i++) {
+        const w = (24 + 70 * u) * Math.pow(0.62, i);
+        const h = w * 0.28 * (1 + 0.2 * Math.sin(t * 18 + i));
+        drawLens(ctx, e.cx, e.cy, w, h, LENS_COLORS[(frame + i) % 3]);
+      }
+    } else if (t < 1.0) {
+      // 5つのひし形が十字に集まったクラスタ。濃淡2色を毎フレーム入れ替える
+      const grow = Math.min(1, (t - 0.55) / 0.12);
+      const main = frame % 2 === 0 ? "#2048e0" : "#38b0f8";
+      const sub = frame % 2 === 0 ? "#38b0f8" : "#2048e0";
+      drawDiamond(ctx, e.cx, e.cy, 16 * grow, 20 * grow, main, false);
+      [
+        [0, -30],
+        [0, 30],
+        [-26, 0],
+        [26, 0],
+      ].forEach(([dx, dy]) => {
+        drawDiamond(
+          ctx,
+          e.cx + dx * grow,
+          e.cy + dy * grow,
+          10 * grow,
+          13 * grow,
+          sub,
+          false
+        );
+      });
+    } else if (t < 1.45) {
+      // 氷柱: 小さなひし形の列が下へ流れ落ちる
+      const u = t - 1.0;
+      [-14, 14].forEach((dx, col) => {
+        for (let i = 0; i < 6; i++) {
+          const y = e.cy - 30 + i * 14 + u * 90;
+          if (y > e.cy + e.h * 0.6) continue;
+          drawDiamond(
+            ctx,
+            e.cx + dx,
+            y,
+            4,
+            6,
+            (i + col + frame) % 2 === 0 ? "#f0ffff" : "#38b0f8",
+            false
+          );
+        }
+      });
+    } else {
+      // 横一線に収束して消える
+      const u = 1 - (t - 1.45) / 0.15;
+      ctx.strokeStyle = "#38b0f8";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(e.cx - 40 * u, e.cy);
+      ctx.lineTo(e.cx + 40 * u, e.cy);
+      ctx.stroke();
+    }
+  });
+}
+
+// サンダー: 波打つ縦の稲妻が落ち、時間とともにまっすぐな線に整って消える
+function fxThunder() {
+  const e = fxEnemyRect();
+  const BOLT_COLORS = ["#f8f800", "#4040f8", "#ffffff"];
+  const strikes = [0.15, 0.55, 0.95].map((time) => ({ time, xs: null }));
+  return runFx(1.45, (ctx, t) => {
+    const frame = Math.floor(t * 15);
+    strikes.forEach((s) => {
+      if (t < s.time || t > s.time + 0.3) return;
+      if (!s.xs) {
+        // 落ちる瞬間に本数と位置を決める
+        const base = e.cx + (Math.random() - 0.5) * 60;
+        s.xs = [base - 10, base + 8, base + (Math.random() - 0.5) * 50];
+        s.phase = Math.random() * 10;
+        psiFlash("thunder");
+        sfx.crack();
+      }
+      // 波打ちの振幅を時間とともに減らしてまっすぐにする
+      const u = (t - s.time) / 0.3;
+      const amp = 9 * Math.max(0, 1 - u * 1.4);
+      s.xs.forEach((x0, i) => {
+        ctx.strokeStyle = BOLT_COLORS[(frame + i) % 3];
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let y = 0; y <= FX_H; y += 6) {
+          const x = x0 + Math.sin(y * 0.22 + s.phase + i * 2 + t * 40) * amp;
+          if (y === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      });
+    });
+  });
+}
+
+// 回復: 緑のバブルが画面下(YOUのあたり)からゆらゆら浮かびあがる
+function fxHeal() {
+  const bubbles = [];
+  for (let i = 0; i < 12; i++) {
+    bubbles.push({
+      x: FX_W / 2 + (Math.random() - 0.5) * 120,
+      start: i * 0.06,
+      spd: 55 + Math.random() * 35,
+      r: 3 + Math.random() * 5,
+      phase: Math.random() * Math.PI * 2,
+    });
+  }
+  let started = false;
+  return runFx(1.3, (ctx, t) => {
+    if (!started) {
+      started = true;
+      psiFlash();
+      sfx.twinkle();
+    }
+    bubbles.forEach((b) => {
+      const u = t - b.start;
+      if (u <= 0 || u > 0.9) return;
+      const x = b.x + Math.sin(u * 6 + b.phase) * 8;
+      const y = FX_H * 0.9 - b.spd * u;
+      ctx.fillStyle = "#2fc878";
+      ctx.beginPath();
+      ctx.arc(x, y, b.r, 0, Math.PI * 2);
+      ctx.fill();
+      // 左上のハイライトでバブルらしさを出す
+      ctx.fillStyle = "#8ce03c";
+      ctx.fillRect(x - b.r * 0.5, y - b.r * 0.5, 2, 2);
+    });
+  });
+}
+
+// PKスターストーム: 他のPSIより長めの大技。幾何学的な星が降ってきて、
+// 星ごとに違う高さでドットの雲になって爆発する。画面全体もたびたび単色で瞬く
+function fxStarstorm() {
+  const STAR_COLORS = [
+    ["#f8d820", "#a08010"],
+    ["#d8e0e8", "#788088"],
+    ["#4040f8", "#202090"],
+  ];
+  const DOT_COLORS = ["#ffffff", "#f8d820", "#4040f8", "#d8f8ff"];
+  const stars = [];
+  for (let i = 0; i < 14; i++) {
+    stars.push({
+      x: 30 + Math.random() * (FX_W - 60),
+      start: 0.15 + i * 0.2,
+      vx: (Math.random() < 0.5 ? -1 : 1) * (25 + Math.random() * 40),
+      vy: 220 + Math.random() * 60,
+      r: 9 + Math.random() * 5,
+      colors: STAR_COLORS[i % 3],
+      // 爆発する高さは星ごとにバラバラ
+      burstY: FX_H * (0.35 + Math.random() * 0.45),
+      // 爆発のドット配置(角度・距離・大きさ)は先に決めておく
+      dots: Array.from({ length: 26 }, () => ({
+        a: Math.random() * Math.PI * 2,
+        d: 0.4 + Math.random() * 0.6,
+        size: Math.random() < 0.4 ? 4 : 2,
+        color: DOT_COLORS[Math.floor(Math.random() * DOT_COLORS.length)],
+      })),
+      sounded: false,
+      burst: false,
+      burstTime: 0,
+      burstX: 0,
+    });
+  }
+  const flashes = [
+    [0.7, "#3030f8"],
+    [1.5, "#f8f800"],
+    [2.3, "#3030f8"],
+    [3.1, "#d8f8ff"],
+    [3.8, "#f8f800"],
+  ];
+  return runFx(4.2, (ctx, t) => {
+    stars.forEach((s, i) => {
+      const u = t - s.start;
+      if (u <= 0) return;
+      if (!s.burst) {
+        if (!s.sounded) {
+          s.sounded = true;
+          if (i % 2 === 0) sfx.starFall();
+        }
+        const x = s.x + s.vx * u;
+        const y = -12 + s.vy * u;
+        if (y >= s.burstY) {
+          s.burst = true;
+          s.burstTime = t;
+          s.burstX = x;
+          sfx.starHit();
+          return;
+        }
+        // 星本体と、寄り添う小さな星
+        drawGeoStar(ctx, x, y, s.r, s.colors[0], s.colors[1]);
+        drawGeoStar(ctx, x + s.r + 4, y - s.r, 3, s.colors[0]);
+      } else {
+        // ドットの雲が広がりながら薄くなっていく爆発
+        const v = t - s.burstTime;
+        if (v > 0.55) return;
+        const w = v / 0.55;
+        s.dots.forEach((dot, k) => {
+          // 外周から順に消えていく
+          if (w > 0.6 && k % 3 === 0) return;
+          const d = dot.d * 36 * w;
+          const size = w < 0.6 ? dot.size : 2;
+          ctx.fillStyle = dot.color;
+          ctx.fillRect(
+            s.burstX + Math.cos(dot.a) * d - size / 2,
+            s.burstY + Math.sin(dot.a) * d * 0.8 - size / 2,
+            size,
+            size
+          );
+        });
+      }
+    });
+    // 画面全体の単色フラッシュ(1〜2コマだけ)
+    flashes.forEach(([time, color]) => {
+      if (t >= time && t < time + 0.09) {
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, FX_W, FX_H);
+      }
+    });
+  });
+}
+
+// PSIエフェクトを種類ごとに再生する(指定なしは回復の緑)
+function playPsiFx(kind) {
+  switch (kind) {
+    case "fire":
+      return fxFire();
+    case "freeze":
+      return fxFreeze();
+    case "thunder":
+      return fxThunder();
+    case "starstorm":
+      return fxStarstorm();
+    default:
+      return fxHeal();
+  }
+}
+
 // 敵(yutat23)の隠しHP。
 const ENEMY_HP_MAX = 1500;
 let enemyHp = ENEMY_HP_MAX;
@@ -1011,9 +1513,10 @@ const ENEMY_ATTACKS = [
   },
   {
     weight: 5,
-    message: "・yutat23 の PKスターストーム!",
+    message: "・yutat23 は PKスターストーム をこころみた!",
     minDamage: 120,
     maxDamage: 190,
+    fx: "starstorm",
   },
 ];
 
@@ -1036,13 +1539,24 @@ function chooseEnemyAttack() {
 async function maybeCounter(prob) {
   if (Math.random() >= prob) return;
   const attack = chooseEnemyAttack();
-  sfx.hit();
   const counter =
     attack.minDamage +
     Math.floor(Math.random() * (attack.maxDamage - attack.minDamage + 1));
   const newHp = Math.max(0, hpMeter.value - counter);
-  hpMeter.setValue(newHp, 10);
-  await say(attack.message + "\n・YOU に " + counter + "の ダメージ!");
+  if (attack.fx) {
+    // 敵のPSIは技名を出してからアニメーションを再生する
+    sfx.psi();
+    state = "msg";
+    await typeMessage(attack.message);
+    await playPsiFx(attack.fx);
+    sfx.hit();
+    hpMeter.setValue(newHp, 10);
+    await say("・YOU に " + counter + "の ダメージ!");
+  } else {
+    sfx.hit();
+    hpMeter.setValue(newHp, 10);
+    await say(attack.message + "\n・YOU に " + counter + "の ダメージ!");
+  }
   // 致命傷でもここでは倒れない。本家と同じく、
   // ドラムロールが0まで回りきる前に回復すれば助かる
   if (newHp === 0) {
@@ -1104,9 +1618,9 @@ async function runDefeat() {
    PSI(選択ウィンドウ + 発動処理)
    -------------------------------------------------------------------------- */
 const PSI_LIST = [
-  { name: "ファイア α", cost: 6, type: "attack", min: 60, max: 100, flash: "fire" },
-  { name: "フリーズ α", cost: 5, type: "attack", min: 135, max: 225, flash: "freeze" },
-  { name: "サンダー α", cost: 3, type: "attack", min: 60, max: 80, miss: 0.4, flash: "thunder" },
+  { name: "PKファイア α", cost: 6, type: "attack", min: 60, max: 100, flash: "fire" },
+  { name: "PKフリーズ α", cost: 5, type: "attack", min: 135, max: 225, flash: "freeze" },
+  { name: "PKサンダー α", cost: 3, type: "attack", min: 60, max: 80, miss: 0.4, flash: "thunder" },
   { name: "ライフアップ α", cost: 5, type: "heal", min: 75, max: 125 },
   { name: "ライフアップ β", cost: 8, type: "heal", min: 225, max: 375 },
 ];
@@ -1146,8 +1660,10 @@ async function castPsi(spell) {
   }
   ppMeter.setValue(ppMeter.value - spell.cost, 10);
   sfx.psi();
-  psiFlash(spell.flash);
-  await say("・YOUは PSI " + spell.name + "!");
+  // 本家と同じく、技名を出したらボタン待ちせずにアニメーションを再生する
+  state = "msg";
+  await typeMessage("・YOUは " + spell.name + " をこころみた!");
+  await playPsiFx(spell.flash);
 
   if (spell.type === "heal") {
     if (hpMeter.value >= STATUS_HP_MAX) {
