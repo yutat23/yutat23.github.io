@@ -122,7 +122,7 @@ body {
 #msg-window {
   position: relative;
   width: 100%;
-  min-height: 92px;
+  min-height: 100px;
   padding: 14px 18px;
   font-size: 18px;
   line-height: 1.8;
@@ -139,6 +139,63 @@ body {
   right: 16px;
   bottom: 8px;
   font-size: 14px;
+}
+
+/* --------------------------------------------------------------------------
+   SMAAAASH!!(クリティカル)バナー
+   低解像度キャンバスに描いた飾り文字を整数倍に拡大してドット絵にする
+   (描画内容はJSの renderSmashBanner が作る)
+   -------------------------------------------------------------------------- */
+#smash-banner {
+  display: block;
+  margin: 0;
+  max-width: 100%;
+  image-rendering: pixelated;
+  transform-origin: left center;
+}
+
+/* 出現時にカクカクと弾けるように拡大する */
+#smash-banner.is-active {
+  animation: smash-pop 0.24s steps(3, end);
+}
+
+@keyframes smash-pop {
+  0% {
+    transform: scale(0.4);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 致命傷を受けた瞬間の画面シェイク(bodyごと揺らして全レイヤーを動かす) */
+body.screen-shake {
+  animation: screen-shake 0.45s linear;
+}
+
+@keyframes screen-shake {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  15% {
+    transform: translateY(-12px);
+  }
+  30% {
+    transform: translateY(10px);
+  }
+  45% {
+    transform: translateY(-8px);
+  }
+  60% {
+    transform: translateY(6px);
+  }
+  80% {
+    transform: translateY(-3px);
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -652,6 +709,12 @@ body::after {
   #flash.is-active {
     animation: none;
   }
+  #smash-banner.is-active {
+    animation: none;
+  }
+  body.screen-shake {
+    animation: none;
+  }
 }
 
 @media (max-width: 520px) {
@@ -668,7 +731,7 @@ body::after {
     font-size: 13px;
   }
   #msg-window {
-    min-height: 94px;
+    min-height: 100px;
     padding: 14px 16px;
     font-size: 17px;
   }

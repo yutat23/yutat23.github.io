@@ -231,6 +231,43 @@ const sfx = {
     playNoise(audioCtx, audioCtx.currentTime, 0.12, 500, 0.06);
     beep(85, 0.12, 0.05);
   },
+  // SMAAAASH!!(バットが炸裂するような強打音)
+  smash: () => {
+    if (!soundOn || !ensureAudio()) return;
+    const t = audioCtx.currentTime;
+    playNoise(audioCtx, t, 0.3, 250, 0.1);
+    playNoise(audioCtx, t + 0.04, 0.22, 1400, 0.05);
+    // ピッチが急落する衝撃音で「バキッ」という重さを出す
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(320, t);
+    osc.frequency.exponentialRampToValueAtTime(45, t + 0.28);
+    gain.gain.setValueAtTime(0.09, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.3);
+  },
+  // 致命傷の警告(トライトーンの唸りが低く尾を引く)
+  mortal: () => {
+    if (!soundOn || !ensureAudio()) return;
+    const t = audioCtx.currentTime;
+    beep(48, 0.5, 0.07);
+    [110, 155.56].forEach((f) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(f, t);
+      osc.frequency.exponentialRampToValueAtTime(f * 0.82, t + 1.1);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.045, t + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 1.2);
+    });
+  },
   // 回復のきらめき(上昇アルペジオ)
   twinkle: () => {
     [660, 880, 1100, 1320].forEach((f, i) =>
@@ -965,6 +1002,115 @@ const TALK_LINES = [
 ];
 let talkIndex = 0;
 
+/* --------------------------------------------------------------------------
+   SMAAAASH!!(クリティカル)バナー
+   本家のロゴのように、先頭ほど大きく後ろほど小さいうねった飾り文字。
+   低解像度キャンバスに描いてアルファを2値化し、整数倍拡大でドット絵にする
+   -------------------------------------------------------------------------- */
+const SMASH_CHARS = [..."SMAAAASH!!"];
+// 本文(18px)と同程度に収まるサイズ。先頭だけ少し大きく、後ろへ小さく
+const SMASH_SIZES = [14, 12, 11, 10, 9, 9, 8, 8, 7, 7];
+const SMASH_SCALE = 2; // 表示倍率(整数でないとドットが崩れる)
+
+const smashFont = (size) =>
+  `italic 900 ${size}px Georgia, "Times New Roman", serif`;
+
+// マスク画像を単色で塗りつぶしたコピーを返す(フチ・影のスタンプ用)
+function tintCanvas(src, color) {
+  const c = document.createElement("canvas");
+  c.width = src.width;
+  c.height = src.height;
+  const ctx = c.getContext("2d");
+  ctx.drawImage(src, 0, 0);
+  ctx.globalCompositeOperation = "source-in";
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, c.width, c.height);
+  return c;
+}
+
+function renderSmashBanner() {
+  const canvas = $("smash-banner");
+  const H = 16; // 2倍拡大で本文1行分(約32px)に収める
+  const BASELINE = 12;
+
+  // 全文字の幅を実測してキャンバス幅を決める
+  const meas = document.createElement("canvas").getContext("2d");
+  let width = 3;
+  SMASH_CHARS.forEach((ch, i) => {
+    meas.font = smashFont(SMASH_SIZES[i]);
+    width += meas.measureText(ch).width + 1;
+  });
+  const W = Math.ceil(width) + 4;
+
+  // 白い文字マスクを描き、アルファを2値化してアンチエイリアスを消す
+  const mask = document.createElement("canvas");
+  mask.width = W;
+  mask.height = H;
+  const mctx = mask.getContext("2d");
+  mctx.fillStyle = "#f8f8f8";
+  let x = 3;
+  SMASH_CHARS.forEach((ch, i) => {
+    mctx.font = smashFont(SMASH_SIZES[i]);
+    mctx.fillText(ch, x, BASELINE + (i % 2)); // 1pxの上下ゆれ
+    x += mctx.measureText(ch).width + 1;
+  });
+  // 小さい文字の細い線が消えないよう、しきい値は低めにする
+  const img = mctx.getImageData(0, 0, W, H);
+  for (let p = 3; p < img.data.length; p += 4) {
+    img.data[p] = img.data[p] > 90 ? 255 : 0;
+  }
+  mctx.putImageData(img, 0, 0);
+
+  // 紫の落ち影 → 黒フチ → 白い本体の順に重ねる
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.width = W * SMASH_SCALE + "px";
+  const ctx = canvas.getContext("2d");
+  const shadow = tintCanvas(mask, "#6830a0");
+  const outline = tintCanvas(mask, "#000000");
+  ctx.drawImage(shadow, 1, 1);
+  [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+    [-1, -1],
+    [1, -1],
+    [-1, 1],
+    [1, 1],
+  ].forEach(([dx, dy]) => ctx.drawImage(outline, dx, dy));
+  ctx.drawImage(mask, 0, 0);
+}
+
+// 本家と同じく「こうげき!」の行の下にSMAAAASH!!をドンと出す
+async function showSmash() {
+  state = "msg";
+  await typeMessage("・YOU の こうげき!");
+  renderSmashBanner();
+  const banner = $("smash-banner");
+  banner.classList.remove("hidden", "is-active");
+  void banner.offsetWidth;
+  banner.classList.add("is-active");
+  sfx.smash();
+  shakeEnemy();
+  // ボタン待ちせず、ひと呼吸おいてダメージメッセージへ流す
+  return new Promise((resolve) =>
+    setTimeout(() => {
+      banner.classList.add("hidden");
+      resolve();
+    }, 950)
+  );
+}
+
+// 致命傷を受けた瞬間の画面シェイク(bodyごと揺らす)
+function screenShake() {
+  const body = document.body;
+  body.classList.remove("screen-shake");
+  void body.offsetWidth;
+  body.classList.add("screen-shake");
+  setTimeout(() => body.classList.remove("screen-shake"), 500);
+}
+
 // 被弾シェイク(クラスを付け直してアニメーションを頭から再生する)
 function shakeEnemy() {
   const enemy = $("enemy");
@@ -1560,6 +1706,8 @@ async function maybeCounter(prob) {
   // 致命傷でもここでは倒れない。本家と同じく、
   // ドラムロールが0まで回りきる前に回復すれば助かる
   if (newHp === 0) {
+    sfx.mortal();
+    screenShake();
     await say("・YOU に ちめいてきな ダメージ!");
   }
   // ランダムなセリフ
@@ -1735,8 +1883,6 @@ async function doAction(action) {
   sfx.ok();
   switch (action) {
     case "attack": {
-      sfx.hit();
-      shakeEnemy();
       // 2割でSMAAAASH!!(クリティカル)
       const smash = Math.random() < 0.2;
       const dmg = smash
@@ -1744,10 +1890,13 @@ async function doAction(action) {
         : 10 + Math.floor(Math.random() * 70);
       enemyHp = Math.max(0, enemyHp - dmg);
       if (smash) {
-        await say("SMAAAASH!!\n・yutat23 に " + dmg + "の ダメージ!");
+        // 本家風: SMAAAASH!!のバナーを出してからダメージを告げる
+        await showSmash();
       } else {
-        await say("・yutat23 に " + dmg + "の ダメージ!");
+        sfx.hit();
+        shakeEnemy();
       }
+      await say("・yutat23 に " + dmg + "の ダメージ!");
       if (enemyHp === 0) {
         await enemyDefeated();
         openMenu();
