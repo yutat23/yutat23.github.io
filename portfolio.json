@@ -3,14 +3,14 @@
     "name": "typo2ch",
     "category": "Webアプリケーション",
     "url": "https://github.com/yutat23/typo2ch",
-    "siteUrl": "https://typo2ch.yutat23.dev",
+    "siteUrl": "https://typo2ch.yutat23.com",
     "description": "2chの書き込み風アニメーションSVGを生成するWebアプリ(TypeScript)"
   },
   {
     "name": "DocSnap",
     "category": "Webアプリケーション",
     "url": "https://github.com/yutat23/docsnap",
-    "siteUrl": "https://docsnap.yutat23.dev",
+    "siteUrl": "https://docsnap.yutat23.com",
     "description": "紙のドキュメントをスマホで撮影して、きれいに整形するWebアプリ(TypeScript)"
   },
   {
